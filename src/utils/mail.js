@@ -2,42 +2,58 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Create a transporter using your Gmail account
-
+// Create a transporter using Gmail SMTP
 export const sendEmailToUser = async (email, userObj) => {
-  console.log( process.env.SERVER_EMAIL + ' server email')
-  console.log( process.env.EMAIL_PASSWORD + ' password')
-  console.log(userObj + " user full obj")
+  console.log("Using email:", process.env.SERVER_EMAIL);
+  console.log("App password:", process.env.EMAIL_PASSWORD);
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      //console all variables 
-      user: process.env.SERVER_EMAIL,
-      pass: process.env.EMAIL_PASSWORD,
+      user: process.env.SERVER_EMAIL,  // Using amankirmara143@gmail.com
+      pass: process.env.EMAIL_PASSWORD, // App-specific password generated from Google
     },
   });
 
-  const mailOptions = {
-    from: process.env.SERVER_EMAIL,
-    to: email,
-    subject: "Test Email",
-    text: `Hello ${userObj.name},
+  // 1. Email to the admin (your email)
+  const adminMailOptions = {
+    from: process.env.SERVER_EMAIL,    // Sender's email address
+    to: process.env.APP_EMAIL,         // Admin's email address (your email: iamankirmara143@gmail.com)
+    subject: "New Message from User",
+    text: `You received a new message from ${userObj.name}:
 
-Thank you for reaching out. We received your message request with the following details:
 - Name: ${userObj.name}
 - Email: ${userObj.email}
 - Message: ${userObj.message}
 
-We will get back to you as soon as possible.
-
-Best regards,
-Your Company Name`,
+Please follow up as soon as possible.`,
   };
 
-  // Send the email
+  // 2. Email to the user (user who filled the form)
+  const userMailOptions = {
+    from: process.env.SERVER_EMAIL,    // Sender's email address
+    to: email,                         // Recipient's email address (dynamic user email)
+    subject: "Thank You for Your Message",
+    text: `Hello ${userObj.name},
+
+Thank you for reaching out to us. Here is a summary of your message:
+- Name: ${userObj.name}
+- Email: ${userObj.email}
+- Message: ${userObj.message}
+
+We will get back to you soon.
+
+Best regards,
+WebGeniusCraft`,
+  };
+
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
+    // Send email to the admin (you)
+    const adminInfo = await transporter.sendMail(adminMailOptions);
+
+    // Send email to the user
+    const userInfo = await transporter.sendMail(userMailOptions);
+    
   } catch (error) {
     console.error("Error sending email:", error);
   }
